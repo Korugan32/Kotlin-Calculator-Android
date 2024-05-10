@@ -1,5 +1,7 @@
-package com.korugan.calculatorapp
+@file:Suppress("NAME_SHADOWING")
 
+package com.korugan.calculatorapp
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,19 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
-import com.korugan.calculatorapp.ui.theme.CalculatorAppTheme
+
 
 
 @Composable
 fun MainScreen() {
-    var islemDur by remember {
-        mutableStateOf("")
-    }
 
     @Composable
     fun height(): Int {
@@ -49,17 +48,80 @@ fun MainScreen() {
         return configuration.screenWidthDp
     }
 
-    var sonuc by remember {
-        mutableStateOf("48")
+    var result by remember {
+        mutableStateOf("")
     }
 
-    var islem by remember {
-        mutableStateOf("21+27")
+    var operation by remember {
+        mutableStateOf("")
     }
 
+    fun calculate(operation: String): String {
+        try {
+            var result = 0.0
+            var currentOperator = '+'
+            var currentNumber = ""
 
+            for (char in operation) {
+                if (char.isDigit() || char == '.') {
+                    currentNumber += char
+                } else if (currentNumber.isEmpty() && char == '-') {
+                    currentNumber += char
+                } else{
+                    when (currentOperator) {
+                        '+' -> result += currentNumber.toDouble()
+                        '-' -> result -= currentNumber.toDouble()
+                        'x' -> result *= currentNumber.toDouble()
+                        '/' -> result /= currentNumber.toDouble()
+                        '%' -> result %= currentNumber.toDouble()
+                    }
+                    currentOperator = char
+                    currentNumber = ""
+                }
+            }
 
+            when (currentOperator) {
+                '+' -> result += currentNumber.toDouble()
+                '-' -> result -= currentNumber.toDouble()
+                'x' -> result *= currentNumber.toDouble()
+                '/' -> result /= currentNumber.toDouble()
+                '%' -> result %= currentNumber.toDouble()
+            }
 
+            return result.toString()
+
+        } catch (e: Exception) {
+            return result
+        }
+    }
+
+    fun updateResult(operation: String) {
+        result = if (operation.isEmpty()) {
+            ""
+        } else {
+            calculate(operation)
+        }
+        if (result == "Infinity") {
+            result = "Sıfırla Bölünme Hatası"
+        }
+    }
+
+    fun onClickEvent(s:String){
+        if (s == "AC") {
+            operation = ""
+            result = ""
+        } else if (s == "DEL") {
+            if (operation.isNotEmpty()) {
+                operation = operation.dropLast(1)
+                updateResult(operation)
+            }
+        } else {
+            operation += s
+            updateResult(operation)
+        }
+    }
+
+//Tasarım(Design) ve Eventler(Events)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -70,23 +132,21 @@ fun MainScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(height() * 0.35.dp)
-                .padding(height()*0.025.dp),
-           verticalArrangement = Arrangement.Bottom
+                .padding(height() * 0.025.dp),
+            verticalArrangement = Arrangement.Bottom
         ) {
             Text(
-                text = islem,
+                text = operation,
                 color = Color.Gray,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontSize = height() * 0.059.sp,
             )
             Text(
-                text = sonuc,
+                text = result,
                 color = Color.White,
                 fontSize = height() * 0.059.sp,
-                modifier = Modifier.padding(8.dp),
-
-            )
+                modifier = Modifier.padding(8.dp),)
         }
         Column(
             modifier = Modifier
@@ -101,7 +161,13 @@ fun MainScreen() {
 
             ) {
                 Button(
-                    onClick = { Math().clear() }, modifier = Modifier
+                    onClick = {
+                        fun clear() {
+                            operation = ""
+                            result = ""
+                        }
+                        clear()
+                    }, modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
@@ -110,16 +176,18 @@ fun MainScreen() {
                     Text(text = "AC", fontSize = (height() * 0.03).sp)
                 }
                 Button(
-                    onClick = { /*TODO*/ }, modifier = Modifier
+                    onClick = {
+                        onClickEvent("DEL")
+                    }, modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.orange))
                 ) {
-                    Text(text = "*", fontSize = (height() * 0.04).sp)
+                    Image(painter = painterResource(id = R.drawable.delete_svgrepo_com), contentDescription = "Delete")
                 }
                 Button(
-                    onClick = { }, modifier = Modifier
+                    onClick = { onClickEvent("%")}, modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
@@ -128,7 +196,7 @@ fun MainScreen() {
                     Text(text = "%", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().divide() }, modifier = Modifier
+                    onClick = { onClickEvent("/") }, modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
@@ -144,7 +212,7 @@ fun MainScreen() {
                     .padding(8.dp)
             ) {
                 Button(
-                    onClick = { islemDur + "1" }, modifier = Modifier
+                    onClick = { onClickEvent("1")}, modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
@@ -153,7 +221,7 @@ fun MainScreen() {
                     Text(text = "1", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("2") }, modifier = Modifier
+                    onClick = { onClickEvent("2") }, modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
@@ -162,7 +230,7 @@ fun MainScreen() {
                     Text(text = "2", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("3") },
+                    onClick = { onClickEvent("3") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -172,14 +240,14 @@ fun MainScreen() {
                     Text(text = "3", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = { onClickEvent("x") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.orange))
                 ) {
-                    Text(text = "X", fontSize = (height() * 0.04).sp)
+                    Text(text = "x", fontSize = (height() * 0.04).sp)
                 }
 
 
@@ -189,7 +257,7 @@ fun MainScreen() {
                     .padding(8.dp)
             ) {
                 Button(
-                    onClick = { Math().addNumber("4") },
+                    onClick = { onClickEvent("4") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -199,7 +267,7 @@ fun MainScreen() {
                     Text(text = "4", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("5") },
+                    onClick = { onClickEvent("5") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -209,7 +277,7 @@ fun MainScreen() {
                     Text(text = "5", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("6") },
+                    onClick = { onClickEvent("6") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -219,7 +287,7 @@ fun MainScreen() {
                     Text(text = "6", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().check = false },
+                    onClick = { onClickEvent("-") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -236,7 +304,7 @@ fun MainScreen() {
                     .padding(8.dp)
             ) {
                 Button(
-                    onClick = { Math().addNumber("7") },
+                    onClick = { onClickEvent("7") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -246,7 +314,7 @@ fun MainScreen() {
                     Text(text = "7", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("8") },
+                    onClick = { onClickEvent("8") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -256,7 +324,7 @@ fun MainScreen() {
                     Text(text = "8", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("9") },
+                    onClick = { onClickEvent("9") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -266,7 +334,7 @@ fun MainScreen() {
                     Text(text = "9", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = { onClickEvent("+") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -284,17 +352,17 @@ fun MainScreen() {
                     .offset(x = -width() * 0.12.dp)
             ) {
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = { onClickEvent(".") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
                         .padding(5.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.orange))
                 ) {
-                    Text(text = ",", fontSize = (height() * 0.04).sp)
+                    Text(text = ".", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { Math().addNumber("0") },
+                    onClick = { onClickEvent("0") },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -304,7 +372,11 @@ fun MainScreen() {
                     Text(text = "0", fontSize = (height() * 0.04).sp)
                 }
                 Button(
-                    onClick = { },
+                    onClick = {
+                        updateResult(operation)
+                        operation = result
+                        result =""
+                    },
                     modifier = Modifier
                         .height((height() * 0.11).dp)
                         .width((height() * 0.11).dp)
@@ -323,12 +395,4 @@ fun MainScreen() {
     }
 
 
-}
-
-@Composable
-@Preview(showBackground = true)
-fun GreetingPreview() {
-    CalculatorAppTheme {
-        MainScreen()
-    }
 }
