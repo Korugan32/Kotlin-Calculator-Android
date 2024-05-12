@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.times
 @Composable
 fun MainScreen() {
     val result = remember { mutableStateOf("") }
-    var operation = remember { mutableStateOf("") }
+    val operation = remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -269,7 +269,7 @@ fun MainScreen() {
                 Button(
                     onClick = {
                         updateResult(operation, result)
-                        operation = result
+                        operation.value = result.value
                         result.value = ""
                     },
                     modifier = Modifier
